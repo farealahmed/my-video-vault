@@ -1,73 +1,104 @@
-# Welcome to your Lovable project
+# My Video Vault - Project Documentation
 
-## Project info
+This document outlines the development process, architecture, troubleshooting steps, and instructions for running the **My Video Vault** application (Frontend + Backend).
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## 1. Project Structure
 
-## How can I edit this code?
+The project is divided into two main directories:
 
-There are several ways of editing your application.
+- **`/frontend`**: Contains the existing React application (User Interface).
+- **`/backend`**: Contains the newly created Spring Boot application (API & Logic).
+- **`docker-compose.yml`**: Configuration for the isolated PostgreSQL database.
 
-**Use Lovable**
+## 2. Development Log (Steps Taken)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Phase 1: Organization
+1.  Moved all existing frontend files into the `/frontend` directory to separate concerns.
+2.  Analyzed the frontend to understand requirements (User Authentication, Video Management).
 
-Changes made via Lovable will be committed automatically to this repo.
+### Phase 2: Backend Setup
+1.  **Spring Boot Initialization**: Created a new Spring Boot project using Maven with the following dependencies:
+    - `Spring Web` (REST API)
+    - `Spring Data JPA` (Database Interaction)
+    - `Spring Security` (Authentication)
+    - `PostgreSQL Driver` (Database Connectivity)
+    - `Lombok` (Boilerplate reduction)
+2.  **Database Configuration**:
+    - Created a `docker-compose.yml` file to run a PostgreSQL 15 container.
+    - Configured `application.yaml` to connect to this database.
 
-**Use your preferred IDE**
+### Phase 3: Backend Implementation
+1.  **Models**: Created `User` and `Video` entities with JPA annotations.
+2.  **Repositories**: Created `UserRepository` and `VideoRepository` interfaces extending `JpaRepository`.
+3.  **Service**: Implemented `FileStorageService` to handle saving video files to the local file system (`uploads/` directory).
+4.  **Security**: Configured `SecurityConfig` to:
+    - Enable CORS (for frontend communication).
+    - Disable CSRF (for REST API).
+    - Password encoding using `BCrypt`.
+5.  **Controllers**:
+    - `AuthController`: Handles Signup and Login.
+    - `VideoController`: Handles Video Upload, Metadata saving, and Deletion.
+    - `FileController`: Serves the actual video files to the frontend.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 3. Troubleshooting & Issues Resolved
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+During the setup, we encountered and solved the following issues:
 
-Follow these steps:
+### Issue 1: `pom.xml` Parsing Error
+- **Problem**: The `pom.xml` file had an unclosed `<dependency>` tag for `spring-boot-starter-test`.
+- **Solution**: Manually corrected the XML structure to ensure all tags were properly closed.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Issue 2: Missing Maven Wrapper
+- **Problem**: Running `./mvnw` failed with "No such file or directory" for `maven-wrapper.properties`.
+- **Solution**: Ran the following command to regenerate the wrapper files:
+  ```bash
+  mvn wrapper:wrapper
+  ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Issue 3: Database Port Conflict
+- **Problem**: Port `5432` was already in use by a local PostgreSQL instance on the host machine, causing the Docker container to fail or the app to connect to the wrong DB.
+- **Solution**: Modified `docker-compose.yml` and `application.yaml` to use port **5433** for this project.
+  - **Docker**: `5433:5432`
+  - **App Config**: `jdbc:postgresql://localhost:5433/videovault`
+  - **Command**: `lsof -i :5432` (to identify the conflict) and `docker-compose down && docker-compose up -d` (to apply changes).
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 4. Backend Architecture
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+- **Database**: PostgreSQL (Stores User and Video metadata).
+- **File Storage**: Local File System (Stores actual video files in `uploads/`).
+- **API Style**: RESTful API.
+- **Security**: Stateless (currently returning User object, scalable to JWT).
+
+## 5. How to Run the Backend
+
+### Prerequisites
+- Docker & Docker Compose
+- Java 21 (SDK)
+
+### Step 1: Start the Database
+Run the PostgreSQL container using Docker Compose:
+```bash
+docker-compose up -d
+```
+*This starts the database on port 5433.*
+
+### Step 2: Build the Backend
+Navigate to the backend directory and build the project (skipping tests for speed):
+```bash
+cd backend
+./mvnw clean package -DskipTests
 ```
 
-**Edit a file directly in GitHub**
+### Step 3: Run the Application
+Start the Spring Boot application:
+```bash
+./mvnw spring-boot:run
+```
+The server will start at `http://localhost:8080`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 6. API Endpoints
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- **POST** `/api/auth/signup`: Create a new user.
+- **POST** `/api/auth/login`: Authenticate user.
+- **POST** `/api/videos/{userId}`: Upload a video (Multipart File).
+- **GET** `/uploads/{filename}`: Stream/View a video file.

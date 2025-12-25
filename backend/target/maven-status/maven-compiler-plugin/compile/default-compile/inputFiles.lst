@@ -1,0 +1,10 @@
+/Users/fareal/moname/Repository/my-video-vault/backend/src/main/java/com/videovault/demo/BackendApplication.java
+/Users/fareal/moname/Repository/my-video-vault/backend/src/main/java/com/videovault/demo/config/SecurityConfig.java
+/Users/fareal/moname/Repository/my-video-vault/backend/src/main/java/com/videovault/demo/controller/AuthController.java
+/Users/fareal/moname/Repository/my-video-vault/backend/src/main/java/com/videovault/demo/controller/FileController.java
+/Users/fareal/moname/Repository/my-video-vault/backend/src/main/java/com/videovault/demo/controller/VideoController.java
+/Users/fareal/moname/Repository/my-video-vault/backend/src/main/java/com/videovault/demo/model/User.java
+/Users/fareal/moname/Repository/my-video-vault/backend/src/main/java/com/videovault/demo/model/Video.java
+/Users/fareal/moname/Repository/my-video-vault/backend/src/main/java/com/videovault/demo/repository/UserRepository.java
+/Users/fareal/moname/Repository/my-video-vault/backend/src/main/java/com/videovault/demo/repository/VideoRepository.java
+/Users/fareal/moname/Repository/my-video-vault/backend/src/main/java/com/videovault/demo/service/FileStorageService.java

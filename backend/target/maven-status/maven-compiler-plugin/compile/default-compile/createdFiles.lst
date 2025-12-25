@@ -1,0 +1,10 @@
+com/videovault/demo/controller/VideoController.class
+com/videovault/demo/service/FileStorageService.class
+com/videovault/demo/controller/AuthController.class
+com/videovault/demo/BackendApplication.class
+com/videovault/demo/repository/VideoRepository.class
+com/videovault/demo/model/Video.class
+com/videovault/demo/repository/UserRepository.class
+com/videovault/demo/config/SecurityConfig.class
+com/videovault/demo/model/User.class
+com/videovault/demo/controller/FileController.class
