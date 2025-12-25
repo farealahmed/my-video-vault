@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '@/types/video';
+import { API_BASE_URL } from '@/config';
 
 const STORAGE_KEY = 'video_app_user';
 
@@ -15,33 +16,50 @@ export const useAuth = () => {
     setIsLoading(false);
   }, []);
 
-  const login = (email: string, password: string): boolean => {
-    // Mock authentication - in real app, this would call an API
-    if (email && password.length >= 6) {
-      const newUser: User = {
-        id: crypto.randomUUID(),
-        email,
-        name: email.split('@')[0],
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-      setUser(newUser);
-      return true;
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const user = await response.json();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+        setUser(user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
-  const signup = (email: string, password: string, name: string): boolean => {
-    if (email && password.length >= 6 && name) {
-      const newUser: User = {
-        id: crypto.randomUUID(),
-        email,
-        name,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-      setUser(newUser);
-      return true;
+  const signup = async (email: string, password: string, name: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      if (response.ok) {
+        const user = await response.json();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+        setUser(user);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Signup error:', error);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {

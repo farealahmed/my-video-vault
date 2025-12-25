@@ -5,8 +5,8 @@ import { User } from '@/types/video';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => boolean;
-  signup: (email: string, password: string, name: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => void;
 }
 

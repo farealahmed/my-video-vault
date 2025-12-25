@@ -19,23 +19,23 @@ const Login = () => {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(loginEmail, loginPassword)) {
+    if (await login(loginEmail, loginPassword)) {
       toast.success('Welcome back!');
       navigate('/dashboard');
     } else {
-      toast.error('Invalid credentials. Password must be at least 6 characters.');
+      toast.error('Invalid credentials or server error.');
     }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (signup(signupEmail, signupPassword, signupName)) {
+    if (await signup(signupEmail, signupPassword, signupName)) {
       toast.success('Account created successfully!');
       navigate('/dashboard');
     } else {
-      toast.error('Please fill all fields. Password must be at least 6 characters.');
+      toast.error('Signup failed. Please try again.');
     }
   };
 

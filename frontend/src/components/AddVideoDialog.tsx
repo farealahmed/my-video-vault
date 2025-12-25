@@ -8,37 +8,37 @@ import { Plus, Link, FileVideo } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AddVideoDialogProps {
-  onAdd: (video: { title: string; description: string; url: string; thumbnail: string; duration: string }) => void;
+  onAdd: (video: { title: string; description: string; file: File; thumbnail: string; duration: string }) => void;
 }
 
 const AddVideoDialog = ({ onAdd }: AddVideoDialogProps) => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [url, setUrl] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [thumbnail, setThumbnail] = useState('');
   const [duration, setDuration] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title || !url) {
-      toast.error('Title and URL are required');
+    if (!title || !file) {
+      toast.error('Title and Video File are required');
       return;
     }
 
     onAdd({
       title,
       description: description || 'No description',
-      url,
+      file,
       thumbnail: thumbnail || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=225&fit=crop',
       duration: duration || '0:00',
     });
 
-    toast.success('Video added successfully!');
+    toast.success('Video upload started!');
     setTitle('');
     setDescription('');
-    setUrl('');
+    setFile(null);
     setThumbnail('');
     setDuration('');
     setOpen(false);
@@ -72,15 +72,15 @@ const AddVideoDialog = ({ onAdd }: AddVideoDialogProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="url" className="flex items-center gap-1">
+            <Label htmlFor="file" className="flex items-center gap-1">
               <Link className="w-4 h-4" />
-              Video URL *
+              Video File *
             </Label>
             <Input
-              id="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com/video.mp4"
+              id="file"
+              type="file"
+              accept="video/*"
+              onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
               className="bg-input border-border"
               required
             />
