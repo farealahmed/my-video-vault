@@ -1,104 +1,332 @@
-# My Video Vault - Project Documentation
+# Video Vault
 
-This document outlines the development process, architecture, troubleshooting steps, and instructions for running the **My Video Vault** application (Frontend + Backend).
+A full-stack web application for uploading, organizing, and streaming your personal video library. Built with a modern React frontend and a robust Spring Boot backend, Video Vault provides a secure and intuitive platform for managing your video collection.
 
-## 1. Project Structure
+## Overview
 
-The project is divided into two main directories:
+Video Vault allows users to create personal accounts, upload videos with metadata (title, description, duration), and stream them directly in the browser. The application features a responsive dashboard that displays your video library in a clean grid layout, with built-in video player functionality.
 
-- **`/frontend`**: Contains the existing React application (User Interface).
-- **`/backend`**: Contains the newly created Spring Boot application (API & Logic).
-- **`docker-compose.yml`**: Configuration for the isolated PostgreSQL database.
+### Key Highlights
 
-## 2. Development Log (Steps Taken)
+- **Secure Authentication**: User registration and login with BCrypt password hashing
+- **Video Management**: Upload, organize, and delete videos from your personal library
+- **Streaming Playback**: Watch videos directly in the browser with a modal video player
+- **Modern UI**: Clean, responsive interface with dark/light theme support
+- **RESTful API**: Well-structured backend API for all operations
 
-### Phase 1: Organization
-1.  Moved all existing frontend files into the `/frontend` directory to separate concerns.
-2.  Analyzed the frontend to understand requirements (User Authentication, Video Management).
+## Architecture
 
-### Phase 2: Backend Setup
-1.  **Spring Boot Initialization**: Created a new Spring Boot project using Maven with the following dependencies:
-    - `Spring Web` (REST API)
-    - `Spring Data JPA` (Database Interaction)
-    - `Spring Security` (Authentication)
-    - `PostgreSQL Driver` (Database Connectivity)
-    - `Lombok` (Boilerplate reduction)
-2.  **Database Configuration**:
-    - Created a `docker-compose.yml` file to run a PostgreSQL 15 container.
-    - Configured `application.yaml` to connect to this database.
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                  CLIENT                                      │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                        React Frontend (Port 8081)                      │  │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │  │
+│  │  │   Login     │  │  Dashboard  │  │   Upload    │  │   Player    │   │  │
+│  │  │   Page      │  │    Page     │  │   Dialog    │  │   Modal     │   │  │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘   │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                      │
+                                      │ HTTP/REST
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                  SERVER                                      │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │                    Spring Boot Backend (Port 8080)                     │  │
+│  │                                                                        │  │
+│  │  ┌──────────────────────────────────────────────────────────────────┐ │  │
+│  │  │                         Controllers                               │ │  │
+│  │  │  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐      │ │  │
+│  │  │  │ AuthController │  │ VideoController│  │ FileController │      │ │  │
+│  │  │  │  /api/auth/*   │  │  /api/videos/* │  │   /uploads/*   │      │ │  │
+│  │  │  └────────────────┘  └────────────────┘  └────────────────┘      │ │  │
+│  │  └──────────────────────────────────────────────────────────────────┘ │  │
+│  │                                │                                       │  │
+│  │  ┌──────────────────────────────────────────────────────────────────┐ │  │
+│  │  │                          Services                                 │ │  │
+│  │  │              ┌─────────────────────────────┐                      │ │  │
+│  │  │              │    FileStorageService       │                      │ │  │
+│  │  │              │   (Handles file uploads)    │                      │ │  │
+│  │  │              └─────────────────────────────┘                      │ │  │
+│  │  └──────────────────────────────────────────────────────────────────┘ │  │
+│  │                                │                                       │  │
+│  │  ┌──────────────────────────────────────────────────────────────────┐ │  │
+│  │  │                        Repositories                               │ │  │
+│  │  │     ┌──────────────────┐        ┌──────────────────┐             │ │  │
+│  │  │     │  UserRepository  │        │  VideoRepository │             │ │  │
+│  │  │     └──────────────────┘        └──────────────────┘             │ │  │
+│  │  └──────────────────────────────────────────────────────────────────┘ │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                          │                           │
+                          ▼                           ▼
+              ┌───────────────────┐       ┌───────────────────┐
+              │    PostgreSQL     │       │   File System     │
+              │   (Port 5433)     │       │    /uploads/      │
+              │                   │       │                   │
+              │  ┌─────────────┐  │       │  ┌─────────────┐  │
+              │  │    Users    │  │       │  │ video1.mp4  │  │
+              │  ├─────────────┤  │       │  │ video2.mp4  │  │
+              │  │   Videos    │  │       │  │ video3.mp4  │  │
+              │  └─────────────┘  │       │  └─────────────┘  │
+              └───────────────────┘       └───────────────────┘
+```
 
-### Phase 3: Backend Implementation
-1.  **Models**: Created `User` and `Video` entities with JPA annotations.
-2.  **Repositories**: Created `UserRepository` and `VideoRepository` interfaces extending `JpaRepository`.
-3.  **Service**: Implemented `FileStorageService` to handle saving video files to the local file system (`uploads/` directory).
-4.  **Security**: Configured `SecurityConfig` to:
-    - Enable CORS (for frontend communication).
-    - Disable CSRF (for REST API).
-    - Password encoding using `BCrypt`.
-5.  **Controllers**:
-    - `AuthController`: Handles Signup and Login.
-    - `VideoController`: Handles Video Upload, Metadata saving, and Deletion.
-    - `FileController`: Serves the actual video files to the frontend.
+## Request Flow
 
-## 3. Troubleshooting & Issues Resolved
+### User Authentication Flow
 
-During the setup, we encountered and solved the following issues:
+```
+┌────────┐      ┌────────────┐      ┌────────────────┐      ┌──────────────┐
+│  User  │      │  Frontend  │      │    Backend     │      │  PostgreSQL  │
+└───┬────┘      └─────┬──────┘      └───────┬────────┘      └──────┬───────┘
+    │                 │                     │                      │
+    │  Enter credentials                    │                      │
+    ├────────────────>│                     │                      │
+    │                 │                     │                      │
+    │                 │  POST /api/auth/login                      │
+    │                 ├────────────────────>│                      │
+    │                 │                     │                      │
+    │                 │                     │  Query user by email │
+    │                 │                     ├─────────────────────>│
+    │                 │                     │                      │
+    │                 │                     │  Return user data    │
+    │                 │                     │<─────────────────────┤
+    │                 │                     │                      │
+    │                 │                     │  Verify BCrypt hash  │
+    │                 │                     ├──────┐               │
+    │                 │                     │      │               │
+    │                 │                     │<─────┘               │
+    │                 │                     │                      │
+    │                 │  Return user object │                      │
+    │                 │<────────────────────┤                      │
+    │                 │                     │                      │
+    │                 │  Store in localStorage                     │
+    │                 ├──────┐              │                      │
+    │                 │      │              │                      │
+    │                 │<─────┘              │                      │
+    │                 │                     │                      │
+    │  Redirect to Dashboard               │                      │
+    │<────────────────┤                     │                      │
+    │                 │                     │                      │
+```
 
-### Issue 1: `pom.xml` Parsing Error
-- **Problem**: The `pom.xml` file had an unclosed `<dependency>` tag for `spring-boot-starter-test`.
-- **Solution**: Manually corrected the XML structure to ensure all tags were properly closed.
+### Video Upload Flow
 
-### Issue 2: Missing Maven Wrapper
-- **Problem**: Running `./mvnw` failed with "No such file or directory" for `maven-wrapper.properties`.
-- **Solution**: Ran the following command to regenerate the wrapper files:
-  ```bash
-  mvn wrapper:wrapper
-  ```
+```
+┌────────┐      ┌────────────┐      ┌────────────────┐      ┌──────────┐      ┌────────────┐
+│  User  │      │  Frontend  │      │    Backend     │      │ Database │      │ FileSystem │
+└───┬────┘      └─────┬──────┘      └───────┬────────┘      └────┬─────┘      └─────┬──────┘
+    │                 │                     │                    │                  │
+    │  Select video file                    │                    │                  │
+    ├────────────────>│                     │                    │                  │
+    │                 │                     │                    │                  │
+    │  Fill metadata  │                     │                    │                  │
+    ├────────────────>│                     │                    │                  │
+    │                 │                     │                    │                  │
+    │                 │  POST /api/videos/{userId}               │                  │
+    │                 │  (multipart/form-data)                   │                  │
+    │                 ├────────────────────>│                    │                  │
+    │                 │                     │                    │                  │
+    │                 │                     │  Save file to disk │                  │
+    │                 │                     ├───────────────────────────────────────>
+    │                 │                     │                    │                  │
+    │                 │                     │                    │   Return filename│
+    │                 │                     │<───────────────────────────────────────
+    │                 │                     │                    │                  │
+    │                 │                     │  Save video metadata                  │
+    │                 │                     ├───────────────────>│                  │
+    │                 │                     │                    │                  │
+    │                 │                     │   Return saved video                  │
+    │                 │                     │<───────────────────┤                  │
+    │                 │                     │                    │                  │
+    │                 │  Return video object│                    │                  │
+    │                 │<────────────────────┤                    │                  │
+    │                 │                     │                    │                  │
+    │  Update video grid                    │                    │                  │
+    │<────────────────┤                     │                    │                  │
+```
 
-### Issue 3: Database Port Conflict
-- **Problem**: Port `5432` was already in use by a local PostgreSQL instance on the host machine, causing the Docker container to fail or the app to connect to the wrong DB.
-- **Solution**: Modified `docker-compose.yml` and `application.yaml` to use port **5433** for this project.
-  - **Docker**: `5433:5432`
-  - **App Config**: `jdbc:postgresql://localhost:5433/videovault`
-  - **Command**: `lsof -i :5432` (to identify the conflict) and `docker-compose down && docker-compose up -d` (to apply changes).
+### Video Streaming Flow
 
-## 4. Backend Architecture
+```
+┌────────┐      ┌────────────┐      ┌────────────────┐      ┌────────────┐
+│  User  │      │  Frontend  │      │    Backend     │      │ FileSystem │
+└───┬────┘      └─────┬──────┘      └───────┬────────┘      └─────┬──────┘
+    │                 │                     │                     │
+    │  Click play     │                     │                     │
+    ├────────────────>│                     │                     │
+    │                 │                     │                     │
+    │                 │  Open video modal   │                     │
+    │                 ├──────┐              │                     │
+    │                 │      │              │                     │
+    │                 │<─────┘              │                     │
+    │                 │                     │                     │
+    │                 │  GET /uploads/{filename}                  │
+    │                 ├────────────────────>│                     │
+    │                 │                     │                     │
+    │                 │                     │  Read video file    │
+    │                 │                     ├────────────────────>│
+    │                 │                     │                     │
+    │                 │                     │  Return file bytes  │
+    │                 │                     │<────────────────────┤
+    │                 │                     │                     │
+    │                 │  Stream video/mp4   │                     │
+    │                 │<────────────────────┤                     │
+    │                 │                     │                     │
+    │  Play video     │                     │                     │
+    │<────────────────┤                     │                     │
+```
 
-- **Database**: PostgreSQL (Stores User and Video metadata).
-- **File Storage**: Local File System (Stores actual video files in `uploads/`).
-- **API Style**: RESTful API.
-- **Security**: Stateless (currently returning User object, scalable to JWT).
+## Tech Stack
 
-## 5. How to Run the Backend
+**Frontend:**
+- React 18 + TypeScript
+- Vite
+- Tailwind CSS + shadcn/ui
+- React Router DOM
+- TanStack React Query
 
-### Prerequisites
+**Backend:**
+- Spring Boot 4.0 (Java 21)
+- Spring Data JPA
+- Spring Security
+- PostgreSQL 15
+
+**Infrastructure:**
 - Docker & Docker Compose
-- Java 21 (SDK)
 
-### Step 1: Start the Database
-Run the PostgreSQL container using Docker Compose:
+## Prerequisites
+
+- Java 21 SDK
+- Node.js 18+
+- Docker & Docker Compose
+
+## Getting Started
+
+### 1. Start the Database
+
 ```bash
 docker-compose up -d
 ```
-*This starts the database on port 5433.*
 
-### Step 2: Build the Backend
-Navigate to the backend directory and build the project (skipping tests for speed):
+This starts PostgreSQL on port `5433`.
+
+### 2. Run the Backend
+
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+
+The API server starts at `http://localhost:8080`.
+
+### 3. Run the Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend runs at `http://localhost:8081`.
+
+## Project Structure
+
+```
+my-video-vault/
+├── frontend/                 # React application
+│   ├── src/
+│   │   ├── components/       # UI components
+│   │   ├── pages/            # Page components
+│   │   ├── hooks/            # Custom React hooks
+│   │   └── types/            # TypeScript types
+│   └── package.json
+├── backend/                  # Spring Boot application
+│   ├── src/main/java/com/videovault/demo/
+│   │   ├── config/           # Security configuration
+│   │   ├── controller/       # REST controllers
+│   │   ├── model/            # JPA entities
+│   │   ├── repository/       # Data repositories
+│   │   └── service/          # Business logic
+│   └── pom.xml
+└── docker-compose.yml        # PostgreSQL container
+```
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/signup` | Create a new user |
+| POST | `/api/auth/login` | Authenticate user |
+
+### Videos
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/videos/{userId}` | Get all videos for a user |
+| POST | `/api/videos/{userId}` | Upload a new video |
+| DELETE | `/api/videos/{videoId}` | Delete a video |
+| GET | `/uploads/{filename}` | Stream a video file |
+
+## Database Schema
+
+```
+┌──────────────────────────────┐       ┌──────────────────────────────────┐
+│            users             │       │             videos               │
+├──────────────────────────────┤       ├──────────────────────────────────┤
+│ id          UUID (PK)        │       │ id            UUID (PK)          │
+│ email       VARCHAR (unique) │       │ title         VARCHAR            │
+│ password    VARCHAR          │◄──────│ description   VARCHAR            │
+│ name        VARCHAR          │   FK  │ url           VARCHAR            │
+└──────────────────────────────┘       │ thumbnail     VARCHAR            │
+                                       │ duration      VARCHAR            │
+                                       │ uploaded_at   TIMESTAMP          │
+                                       │ user_id       UUID (FK)          │
+                                       └──────────────────────────────────┘
+```
+
+## Features
+
+- User authentication (signup/login)
+- Video upload with metadata
+- Video streaming playback
+- Responsive dashboard with video grid
+- Dark/light theme support
+
+## Configuration
+
+**Database** (docker-compose.yml):
+- Port: `5433`
+- Database: `videovault`
+- User: `postgres`
+- Password: `password`
+
+**Backend** (backend/src/main/resources/application.yaml):
+- Server port: `8080`
+- Database connection configured for Docker PostgreSQL
+
+**Frontend** (frontend/src/config.ts):
+- API URL: `http://localhost:8080/api`
+
+## Build for Production
+
+**Frontend:**
+```bash
+cd frontend
+npm run build
+```
+
+**Backend:**
 ```bash
 cd backend
 ./mvnw clean package -DskipTests
+java -jar target/*.jar
 ```
 
-### Step 3: Run the Application
-Start the Spring Boot application:
-```bash
-./mvnw spring-boot:run
-```
-The server will start at `http://localhost:8080`.
+## License
 
-## 6. API Endpoints
-
-- **POST** `/api/auth/signup`: Create a new user.
-- **POST** `/api/auth/login`: Authenticate user.
-- **POST** `/api/videos/{userId}`: Upload a video (Multipart File).
-- **GET** `/uploads/{filename}`: Stream/View a video file.
+MIT
