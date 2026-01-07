@@ -19,6 +19,17 @@ const Login = () => {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
 
+  const handleTabChange = (value: string) => {
+    if (value === 'login') {
+      setSignupName('');
+      setSignupEmail('');
+      setSignupPassword('');
+    } else {
+      setLoginEmail('');
+      setLoginPassword('');
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (await login(loginEmail, loginPassword)) {
@@ -69,7 +80,7 @@ const Login = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs defaultValue="login" className="w-full" onValueChange={handleTabChange}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -108,7 +119,7 @@ const Login = () => {
               </TabsContent>
               
               <TabsContent value="signup">
-                <form onSubmit={handleSignup} className="space-y-4">
+                <form onSubmit={handleSignup} className="space-y-4" autoComplete="off">
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Name</Label>
                     <Input
@@ -119,6 +130,7 @@ const Login = () => {
                       onChange={(e) => setSignupName(e.target.value)}
                       required
                       className="bg-input border-border"
+                      autoComplete="new-name"
                     />
                   </div>
                   <div className="space-y-2">
@@ -131,6 +143,7 @@ const Login = () => {
                       onChange={(e) => setSignupEmail(e.target.value)}
                       required
                       className="bg-input border-border"
+                      autoComplete="new-email"
                     />
                   </div>
                   <div className="space-y-2">
@@ -143,6 +156,7 @@ const Login = () => {
                       onChange={(e) => setSignupPassword(e.target.value)}
                       required
                       className="bg-input border-border"
+                      autoComplete="new-password"
                     />
                   </div>
                   <Button type="submit" className="w-full gradient-primary hover:opacity-90 transition-opacity">
