@@ -38,4 +38,22 @@ public class FileController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @GetMapping("/thumbnails/{fileName:.+}")
+    public ResponseEntity<Resource> getThumbnail(@PathVariable String fileName) {
+        try {
+            Path filePath = Paths.get(uploadDir).resolve("thumbnails").resolve(fileName).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (resource.exists()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (MalformedURLException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

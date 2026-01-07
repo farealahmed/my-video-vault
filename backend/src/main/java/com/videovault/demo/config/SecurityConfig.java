@@ -24,8 +24,8 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for REST APIs
             .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS for React frontend
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/uploads/**").permitAll() // Allow login/signup and file access
-                .anyRequest().authenticated() // All other requests need login
+                .requestMatchers("/api/**", "/uploads/**").permitAll() // Allow all API endpoints
+                .anyRequest().permitAll()
             );
         
         return http.build();

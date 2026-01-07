@@ -45,10 +45,10 @@ Video Vault allows users to create personal accounts, upload videos with metadat
 │  │                                │                                       │  │
 │  │  ┌──────────────────────────────────────────────────────────────────┐ │  │
 │  │  │                          Services                                 │ │  │
-│  │  │              ┌─────────────────────────────┐                      │ │  │
-│  │  │              │    FileStorageService       │                      │ │  │
-│  │  │              │   (Handles file uploads)    │                      │ │  │
-│  │  │              └─────────────────────────────┘                      │ │  │
+│  │  │  ┌─────────────────────────────┐  ┌─────────────────────────────┐│ │  │
+│  │  │  │    FileStorageService       │  │  VideoProcessingService     ││ │  │
+│  │  │  │   (Handles file uploads)    │  │  (FFmpeg thumbnail/duration)││ │  │
+│  │  │  └─────────────────────────────┘  └─────────────────────────────┘│ │  │
 │  │  └──────────────────────────────────────────────────────────────────┘ │  │
 │  │                                │                                       │  │
 │  │  ┌──────────────────────────────────────────────────────────────────┐ │  │
@@ -202,6 +202,17 @@ Video Vault allows users to create personal accounts, upload videos with metadat
 - Java 21 SDK
 - Node.js 18+
 - Docker & Docker Compose
+- FFmpeg (for automatic thumbnail generation and duration extraction)
+  ```bash
+  # macOS
+  brew install ffmpeg
+
+  # Ubuntu/Debian
+  sudo apt install ffmpeg
+
+  # Windows (via Chocolatey)
+  choco install ffmpeg
+  ```
 
 ## Getting Started
 
@@ -268,9 +279,10 @@ my-video-vault/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/videos/{userId}` | Get all videos for a user |
-| POST | `/api/videos/{userId}` | Upload a new video |
-| DELETE | `/api/videos/{videoId}` | Delete a video |
+| POST | `/api/videos/{userId}` | Upload a new video (auto-generates thumbnail & duration) |
+| DELETE | `/api/videos/{videoId}` | Delete a video (removes files from disk) |
 | GET | `/uploads/{filename}` | Stream a video file |
+| GET | `/uploads/thumbnails/{filename}` | Serve a thumbnail image |
 
 ## Database Schema
 
@@ -291,11 +303,36 @@ my-video-vault/
 
 ## Features
 
-- User authentication (signup/login)
-- Video upload with metadata
-- Video streaming playback
+### Core Features
+- User authentication (signup/login) with BCrypt password hashing
+- Video upload with metadata (title, description)
+- Video streaming playback in modal player
 - Responsive dashboard with video grid
 - Dark/light theme support
+
+### Advanced Features (Recent Additions)
+
+#### Automatic Video Processing with FFmpeg
+- **Auto-generated Thumbnails**: When uploading a video, the system automatically extracts a frame at 1 second and creates a thumbnail image (400px width, JPEG format)
+- **Auto-extracted Duration**: Video duration is automatically detected using FFprobe and displayed in MM:SS or H:MM:SS format
+- **Auto-extracted Title**: If no title is provided, the system intelligently extracts a clean title from the filename (removes extension, replaces underscores/hyphens with spaces, capitalizes words)
+
+#### Complete File Management
+- **Full Video Deletion**: When deleting a video from the UI:
+  - Removes the video file from local storage (`backend/uploads/`)
+  - Removes the thumbnail from local storage (`backend/uploads/thumbnails/`)
+  - Deletes the database record
+  - Handles URL-encoded filenames (spaces and special characters)
+
+#### Improved User Experience
+- **Form Reset on Dialog Close**: The "Add Video" dialog automatically clears all form data when closed
+- **Styled File Input**: File input field matches the application's design with muted placeholder colors
+- **Clean Empty State**: Simplified dashboard with single "Add Video" button when no videos exist
+
+### Technical Improvements
+- Added dedicated thumbnail serving endpoint (`/uploads/thumbnails/{fileName}`)
+- URL decoding for file deletion to handle special characters in filenames
+- Proper CORS configuration for frontend-backend communication
 
 ## Configuration
 

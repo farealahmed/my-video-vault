@@ -7,13 +7,13 @@ import VideoCard from '@/components/VideoCard';
 import VideoPlayer from '@/components/VideoPlayer';
 import AddVideoDialog from '@/components/AddVideoDialog';
 import { Button } from '@/components/ui/button';
-import { Play, LogOut, Film, Download, User } from 'lucide-react';
+import { Play, LogOut, Film, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, logout } = useAuthContext();
-  const { videos, isLoading: videosLoading, addVideo, deleteVideo, loadSampleVideos } = useVideos(user?.id);
+  const { videos, isLoading: videosLoading, addVideo, deleteVideo } = useVideos(user?.id);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isPlayerOpen, setIsPlayerOpen] = useState(false);
 
@@ -88,15 +88,7 @@ const Dashboard = () => {
               {videos.length} video{videos.length !== 1 ? 's' : ''} in your library
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            {videos.length === 0 && (
-              <Button variant="outline" onClick={loadSampleVideos} className="gap-2 border-border">
-                <Download className="w-4 h-4" />
-                Load Sample Videos
-              </Button>
-            )}
-            <AddVideoDialog onAdd={addVideo} />
-          </div>
+          <AddVideoDialog onAdd={addVideo} />
         </div>
 
         {videos.length === 0 ? (
@@ -106,15 +98,9 @@ const Dashboard = () => {
             </div>
             <h3 className="text-2xl font-semibold text-foreground mb-2">No videos yet</h3>
             <p className="text-muted-foreground max-w-md mx-auto mb-6">
-              Start building your video library by adding videos or loading some samples to explore.
+              Start building your video library by adding your first video.
             </p>
-            <div className="flex items-center justify-center gap-3">
-              <Button variant="outline" onClick={loadSampleVideos} className="gap-2 border-border">
-                <Download className="w-4 h-4" />
-                Load Sample Videos
-              </Button>
-              <AddVideoDialog onAdd={addVideo} />
-            </div>
+            <AddVideoDialog onAdd={addVideo} />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

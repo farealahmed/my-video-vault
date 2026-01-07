@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Link, FileVideo } from 'lucide-react';
+import { Plus, Upload, FileVideo, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AddVideoDialogProps {
-  onAdd: (video: { title: string; description: string; file: File; thumbnail: string; duration: string }) => void;
+  onAdd: (video: { title: string; description: string; file: File; duration: string }) => void;
 }
 
 const AddVideoDialog = ({ onAdd }: AddVideoDialogProps) => {
@@ -16,36 +16,73 @@ const AddVideoDialog = ({ onAdd }: AddVideoDialogProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  const [thumbnail, setThumbnail] = useState('');
-  const [duration, setDuration] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!title || !file) {
-      toast.error('Title and Video File are required');
-      return;
-    }
-
-    onAdd({
-      title,
-      description: description || 'No description',
-      file,
-      thumbnail: thumbnail || 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=225&fit=crop',
-      duration: duration || '0:00',
-    });
-
-    toast.success('Video upload started!');
+  const resetForm = () => {
     setTitle('');
     setDescription('');
     setFile(null);
-    setThumbnail('');
-    setDuration('');
-    setOpen(false);
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      resetForm();
+    }
+  };
+
+  const extractTitleFromFilename = (filename: string): string => {
+    // Remove file extension
+    let title = filename.replace(/\.[^.]+$/, '');
+    // Replace underscores and hyphens with spaces
+    title = title.replace(/[_-]/g, ' ');
+    // Capitalize first letter of each word
+    title = title.replace(/\b\w/g, (char) => char.toUpperCase());
+    return title;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files ? e.target.files[0] : null;
+    setFile(selectedFile);
+
+    // Auto-populate title from filename if title is empty
+    if (selectedFile && !title) {
+      setTitle(extractTitleFromFilename(selectedFile.name));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!file) {
+      toast.error('Please select a video file');
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      await onAdd({
+        title: title || extractTitleFromFilename(file.name),
+        description: description || '',
+        file,
+        duration: '', // Backend will extract this automatically
+      });
+
+      toast.success('Video uploaded successfully!');
+      setTitle('');
+      setDescription('');
+      setFile(null);
+      setOpen(false);
+    } catch {
+      toast.error('Failed to upload video');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="gradient-primary hover:opacity-90 transition-opacity gap-2">
           <Plus className="w-5 h-5" />
@@ -61,52 +98,38 @@ const AddVideoDialog = ({ onAdd }: AddVideoDialogProps) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title *</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Video title"
-              className="bg-input border-border"
-              required
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="file" className="flex items-center gap-1">
-              <Link className="w-4 h-4" />
+              <Upload className="w-4 h-4" />
               Video File *
             </Label>
             <Input
               id="file"
               type="file"
               accept="video/*"
-              onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-              className="bg-input border-border"
+              onChange={handleFileChange}
+              className="bg-input border-border file:hidden text-muted-foreground cursor-pointer"
               required
+              disabled={isUploading}
             />
+            {file && (
+              <p className="text-sm text-muted-foreground">
+                Selected: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+              </p>
+            )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="thumbnail">Thumbnail URL</Label>
+            <Label htmlFor="title">Title (auto-filled from filename)</Label>
             <Input
-              id="thumbnail"
-              value={thumbnail}
-              onChange={(e) => setThumbnail(e.target.value)}
-              placeholder="https://example.com/thumbnail.jpg"
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Video title"
               className="bg-input border-border"
+              disabled={isUploading}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="duration">Duration</Label>
-            <Input
-              id="duration"
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              placeholder="5:30"
-              className="bg-input border-border"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Description (optional)</Label>
             <Textarea
               id="description"
               value={description}
@@ -114,10 +137,25 @@ const AddVideoDialog = ({ onAdd }: AddVideoDialogProps) => {
               placeholder="Describe your video..."
               className="bg-input border-border resize-none"
               rows={3}
+              disabled={isUploading}
             />
           </div>
-          <Button type="submit" className="w-full gradient-primary hover:opacity-90">
-            Add Video
+          <p className="text-xs text-muted-foreground">
+            Duration and thumbnail will be extracted automatically from the video.
+          </p>
+          <Button
+            type="submit"
+            className="w-full gradient-primary hover:opacity-90"
+            disabled={isUploading || !file}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              'Upload Video'
+            )}
           </Button>
         </form>
       </DialogContent>

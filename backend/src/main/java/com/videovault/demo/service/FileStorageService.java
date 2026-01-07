@@ -47,4 +47,29 @@ public class FileStorageService {
             throw new RuntimeException("Could not store file " + fileName + ". Please try again!", ex);
         }
     }
+
+    public void deleteFile(String fileName) {
+        try {
+            Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
+            System.out.println("Attempting to delete file: " + filePath);
+            boolean deleted = Files.deleteIfExists(filePath);
+            System.out.println("File deleted: " + deleted);
+        } catch (IOException ex) {
+            System.err.println("Could not delete file " + fileName + ": " + ex.getMessage());
+        }
+    }
+
+    public void deleteThumbnail(String thumbnailPath) {
+        if (thumbnailPath == null || thumbnailPath.isEmpty()) {
+            return;
+        }
+        try {
+            Path filePath = this.fileStorageLocation.resolve(thumbnailPath).normalize();
+            System.out.println("Attempting to delete thumbnail: " + filePath);
+            boolean deleted = Files.deleteIfExists(filePath);
+            System.out.println("Thumbnail deleted: " + deleted);
+        } catch (IOException ex) {
+            System.err.println("Could not delete thumbnail " + thumbnailPath + ": " + ex.getMessage());
+        }
+    }
 }
