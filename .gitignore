@@ -9,7 +9,7 @@ target/
 # IDE
 .idea/
 *.iml
-.vscode/*
+.vscode/
 !.vscode/settings.json
 !.vscode/extensions.json
 
